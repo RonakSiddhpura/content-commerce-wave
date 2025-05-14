@@ -171,7 +171,8 @@ const ProductsPage = () => {
     availability: true,
   });
   
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 200]);
+  // Fixed by changing the type annotation to number[]
+  const [priceRange, setPriceRange] = useState<number[]>([0, 200]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState("relevance");
   const [searchQuery, setSearchQuery] = useState("");
