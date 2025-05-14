@@ -1,36 +1,14 @@
 
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Trash2, Minus, Plus, RefreshCcw, ShoppingCart, ChevronRight } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { useCart } from "@/contexts/CartContext";
+import { useState } from "react";
 
-// Mock cart data (would be managed via context/state)
-const initialCartItems = [
-  {
-    id: 1,
-    name: "Wireless Headphones",
-    price: 149.99,
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-    slug: "wireless-headphones",
-    quantity: 1,
-    color: "Black",
-    variant: "Standard",
-  },
-  {
-    id: 3,
-    name: "Smart Watch",
-    price: 199.99,
-    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1999&q=80",
-    slug: "smart-watch",
-    quantity: 1,
-    color: "Black",
-    variant: "Pro",
-  }
-];
-
+// Mock suggested products (would be from an API in a real app)
 const suggestedProducts = [
   {
     id: 7,
@@ -57,34 +35,20 @@ const suggestedProducts = [
 ];
 
 const CartPage = () => {
-  const [cartItems, setCartItems] = useState(initialCartItems);
+  const { 
+    cart, 
+    updateQuantity, 
+    removeItem, 
+    clearCart, 
+    addToCart,
+    subtotal,
+    shipping,
+    tax,
+    total
+  } = useCart();
   const [couponCode, setCouponCode] = useState("");
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const { toast } = useToast();
-  
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const shipping = subtotal > 100 ? 0 : 10;
-  const tax = subtotal * 0.1; // 10% tax
-  const total = subtotal + shipping + tax;
-  
-  const updateQuantity = (id: number, newQuantity: number) => {
-    if (newQuantity < 1) return;
-    
-    setCartItems(prev => 
-      prev.map(item => 
-        item.id === id ? { ...item, quantity: newQuantity } : item
-      )
-    );
-  };
-  
-  const removeItem = (id: number) => {
-    setCartItems(prev => prev.filter(item => item.id !== id));
-    
-    toast({
-      title: "Item removed",
-      description: "The item was removed from your cart.",
-    });
-  };
   
   const handleApplyCoupon = () => {
     setIsApplyingCoupon(true);
@@ -107,12 +71,22 @@ const CartPage = () => {
       }
     }, 1000);
   };
+
+  const handleAddSuggestedToCart = (product) => {
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      slug: product.slug,
+    });
+  };
   
   return (
     <div className="container py-8">
       <h1 className="text-3xl font-bold mb-6">Your Cart</h1>
       
-      {cartItems.length === 0 ? (
+      {cart.items.length === 0 ? (
         <div className="text-center py-16">
           <div className="flex justify-center mb-6">
             <ShoppingCart className="h-16 w-16 text-muted-foreground" />
@@ -136,7 +110,7 @@ const CartPage = () => {
                 </div>
               </div>
               
-              {cartItems.map((item) => (
+              {cart.items.map((item) => (
                 <div key={item.id} className="p-4 border-t">
                   <div className="grid grid-cols-12 gap-4 items-center">
                     <div className="col-span-6">
@@ -147,7 +121,7 @@ const CartPage = () => {
                         <div className="ml-4">
                           <Link to={`/products/${item.slug}`} className="font-medium hover:underline">{item.name}</Link>
                           <div className="text-sm text-muted-foreground">
-                            <span>{item.color}</span>
+                            {item.color && <span>{item.color}</span>}
                             {item.variant && <span> / {item.variant}</span>}
                           </div>
                           <button 
@@ -206,7 +180,7 @@ const CartPage = () => {
                     Continue Shopping
                   </Link>
                 </Button>
-                <Button variant="outline" onClick={() => setCartItems([])}>
+                <Button variant="outline" onClick={clearCart}>
                   <Trash2 className="mr-2 h-4 w-4" />
                   Clear Cart
                 </Button>
@@ -276,7 +250,7 @@ const CartPage = () => {
       )}
       
       {/* You might also like */}
-      {cartItems.length > 0 && (
+      {cart.items.length > 0 && (
         <div className="mt-16">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold">You might also like</h2>
@@ -301,7 +275,7 @@ const CartPage = () => {
                   </Link>
                   <div className="flex items-center justify-between mt-2">
                     <span className="font-semibold">${product.price.toFixed(2)}</span>
-                    <Button size="sm">Add to Cart</Button>
+                    <Button size="sm" onClick={() => handleAddSuggestedToCart(product)}>Add to Cart</Button>
                   </div>
                 </div>
               </div>

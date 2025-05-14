@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -9,39 +8,14 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
 import { ChevronRight, Shield, CreditCard, ShoppingBag, Clock } from "lucide-react";
-
-// Mock cart items (would be fetched from cart context/state)
-const cartItems = [
-  {
-    id: 1,
-    name: "Wireless Headphones",
-    price: 149.99,
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-    quantity: 1,
-    color: "Black",
-    variant: "Standard",
-  },
-  {
-    id: 3,
-    name: "Smart Watch",
-    price: 199.99,
-    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1999&q=80",
-    quantity: 1,
-    color: "Black",
-    variant: "Pro",
-  }
-];
+import { useCart } from "@/contexts/CartContext";
 
 const CheckoutPage = () => {
   const [activeStep, setActiveStep] = useState(1);
   const [isOrdering, setIsOrdering] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("credit-card");
   const { toast } = useToast();
-  
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const shipping = subtotal > 100 ? 0 : 10;
-  const tax = subtotal * 0.1; // 10% tax
-  const total = subtotal + shipping + tax;
+  const { cart, subtotal, shipping, tax, total } = useCart();
   
   const handleContinue = () => {
     if (activeStep < 3) {
@@ -320,7 +294,7 @@ const CheckoutPage = () => {
                   <div>
                     <h3 className="font-medium mb-4">Order Items</h3>
                     <div className="space-y-4">
-                      {cartItems.map((item) => (
+                      {cart.items.map((item) => (
                         <div key={item.id} className="flex items-start">
                           <div className="w-16 h-16 rounded-md overflow-hidden bg-slate-100 flex-shrink-0">
                             <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
@@ -371,7 +345,7 @@ const CheckoutPage = () => {
             <h2 className="text-lg font-bold mb-4">Order Summary</h2>
             
             <div className="space-y-4">
-              {cartItems.map((item) => (
+              {cart.items.map((item) => (
                 <div key={item.id} className="flex">
                   <div className="w-12 h-12 rounded-md overflow-hidden bg-slate-100 flex-shrink-0">
                     <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
