@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ShoppingCart, User, Search, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import MegaMenu from "./MegaMenu";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -25,19 +26,6 @@ const Header = () => {
           <Link to="/" className="text-2xl font-bold text-brand">
             E-Shop
           </Link>
-          
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-6">
-            {navItems.map((item) => (
-              <Link 
-                key={item.path}
-                to={item.path}
-                className="text-foreground hover:text-brand transition-colors"
-              >
-                {item.title}
-              </Link>
-            ))}
-          </nav>
           
           {/* Search */}
           <div className="hidden md:flex relative w-full max-w-sm mx-4">
@@ -66,6 +54,11 @@ const Header = () => {
               {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           </div>
+        </div>
+        
+        {/* Desktop Navigation with MegaMenu */}
+        <div className="hidden md:block pt-2">
+          <MegaMenu />
         </div>
         
         {/* Mobile Menu */}
