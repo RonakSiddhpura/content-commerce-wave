@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/components/ui/use-toast";
+import { useCart } from "@/contexts/CartContext";
 import { 
   Star, 
   Minus, 
@@ -13,7 +15,8 @@ import {
   Truck,
   RefreshCcw,
   CheckCircle,
-  ChevronRight
+  ChevronRight,
+  Bookmark
 } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 
@@ -58,7 +61,8 @@ const products = [
     options: {
       colors: ["Black", "White", "Blue"],
       variants: ["Standard", "Pro"]
-    }
+    },
+    tags: ["Best Seller", "Limited Edition"],
   },
   // Other products as needed
 ];
@@ -116,6 +120,9 @@ const ProductPage = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState("Black");
   const [selectedVariant, setSelectedVariant] = useState("Standard");
+  const [isInWishlist, setIsInWishlist] = useState(false);
+  const { toast } = useToast();
+  const { addToCart } = useCart();
   
   // In a real app, you would fetch the product based on slug
   const product = products.find(p => p.slug === slug);
@@ -144,6 +151,41 @@ const ProductPage = () => {
     }
   };
   
+  const handleAddToCart = () => {
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.salePrice || product.price,
+      image: product.image,
+      slug: product.slug,
+      quantity,
+      color: selectedColor,
+      variant: selectedVariant
+    });
+  };
+  
+  const handleAddToWishlist = () => {
+    setIsInWishlist(!isInWishlist);
+    toast({
+      title: isInWishlist ? "Removed from Wishlist" : "Added to Wishlist",
+      description: isInWishlist 
+        ? `${product.name} has been removed from your wishlist.`
+        : `${product.name} has been added to your wishlist.`,
+    });
+  };
+  
+  const handleBuyNow = () => {
+    handleAddToCart();
+    window.location.href = "/checkout";
+  };
+  
+  const handleWriteReview = () => {
+    toast({
+      title: "Write a Review",
+      description: "Review functionality will be implemented soon.",
+    });
+  };
+  
   return (
     <div className="container py-8">
       {/* Breadcrumbs */}
@@ -162,12 +204,15 @@ const ProductPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
         {/* Product Images */}
         <div className="space-y-4">
-          <div className="border rounded-lg overflow-hidden aspect-square bg-slate-50">
+          <div className="border rounded-lg overflow-hidden aspect-square bg-slate-50 relative group">
             <img 
               src={product.images[selectedImage]} 
               alt={product.name} 
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110"
             />
+            {/* Zoom overlay */}
+            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity duration-300 flex items-center justify-center">
+            </div>
           </div>
           <div className="flex space-x-4 overflow-x-auto pb-2">
             {product.images.map((image, index) => (
@@ -192,6 +237,9 @@ const ProductPage = () => {
         <div>
           <div className="mb-4">
             {product.isNew && <Badge className="mb-2 bg-brand border-0">New</Badge>}
+            {product.tags && product.tags.map(tag => (
+              <Badge key={tag} className="mb-2 ml-2 bg-purple-100 text-purple-800 border-purple-200">{tag}</Badge>
+            ))}
             <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
             
             <div className="flex items-center mb-2">
@@ -205,6 +253,12 @@ const ProductPage = () => {
                 ))}
               </div>
               <span className="text-sm text-muted-foreground ml-2">({product.rating.toFixed(1)})</span>
+              <button 
+                onClick={handleWriteReview}
+                className="ml-3 text-sm text-brand hover:underline"
+              >
+                Write a review
+              </button>
             </div>
             
             <div className="text-2xl font-bold mb-4">
@@ -298,13 +352,16 @@ const ProductPage = () => {
           
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 mb-8">
-            <Button size="lg" className="flex-1">
+            <Button size="lg" className="flex-1" onClick={handleAddToCart}>
               <ShoppingCart className="mr-2 h-5 w-5" />
               Add to Cart
             </Button>
-            <Button size="lg" variant="secondary" className="flex-1">
-              <Heart className="mr-2 h-5 w-5" />
-              Add to Wishlist
+            <Button size="lg" variant="secondary" className="flex-1" onClick={handleAddToWishlist}>
+              <Heart className={`mr-2 h-5 w-5 ${isInWishlist ? "fill-current" : ""}`} />
+              {isInWishlist ? "Remove from Wishlist" : "Add to Wishlist"}
+            </Button>
+            <Button size="lg" variant="default" className="flex-1 bg-green-600 hover:bg-green-700" onClick={handleBuyNow}>
+              Buy Now
             </Button>
           </div>
           
@@ -360,7 +417,7 @@ const ProductPage = () => {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <h3 className="font-semibold text-xl">Customer Reviews</h3>
-                <Button variant="outline">Write a Review</Button>
+                <Button variant="outline" onClick={handleWriteReview}>Write a Review</Button>
               </div>
               <p className="text-muted-foreground">No reviews yet. Be the first to leave a review!</p>
             </div>

@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Star, ShoppingCart } from "lucide-react";
+import { useCart } from "@/contexts/CartContext";
 
 interface Product {
   id: number;
@@ -22,6 +23,19 @@ interface ProductCardProps {
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
+  const { addToCart } = useCart();
+  
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.salePrice || product.price,
+      image: product.image,
+      slug: product.slug
+    });
+  };
+  
   return (
     <Card className="overflow-hidden border border-slate-200 rounded-md h-full group">
       <div className="relative">
@@ -47,7 +61,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
         
         {/* Quick add button */}
         <div className="absolute bottom-0 left-0 right-0 p-2 transform translate-y-full transition-transform duration-300 opacity-0 group-hover:opacity-100 group-hover:translate-y-0">
-          <Button variant="default" className="w-full" size="sm">
+          <Button variant="default" className="w-full" size="sm" onClick={handleAddToCart}>
             <ShoppingCart className="h-4 w-4 mr-2" />
             Add to Cart
           </Button>
