@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,18 +8,26 @@ import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
-import { ChevronRight, Shield, CreditCard, ShoppingBag, Clock } from "lucide-react";
+import { ChevronRight, Shield, CreditCard, ShoppingBag, Clock, CheckCircle } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 const CheckoutPage = () => {
   const [activeStep, setActiveStep] = useState(1);
   const [isOrdering, setIsOrdering] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("credit-card");
+  const [otp, setOtp] = useState("");
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
   const { toast } = useToast();
   const { cart, subtotal, shipping, tax, total } = useCart();
   
   const handleContinue = () => {
-    if (activeStep < 3) {
+    if (activeStep < 4) {
+      // If moving from payment to verification, send OTP first
+      if (activeStep === 2) {
+        sendOtp();
+      }
       setActiveStep(activeStep + 1);
       window.scrollTo(0, 0);
     }
@@ -29,6 +38,41 @@ const CheckoutPage = () => {
       setActiveStep(activeStep - 1);
       window.scrollTo(0, 0);
     }
+  };
+  
+  const sendOtp = () => {
+    // Simulate sending OTP
+    toast({
+      title: "OTP Sent",
+      description: "A verification code has been sent to your mobile number.",
+    });
+    
+    // In a real app, you would trigger an API call to send OTP
+  };
+  
+  const verifyOtp = () => {
+    setIsVerifyingOtp(true);
+    
+    // Simulate API call to verify OTP
+    setTimeout(() => {
+      setIsVerifyingOtp(false);
+      
+      // For demo purposes, any 4-digit OTP is accepted
+      if (otp.length === 4) {
+        setOtpVerified(true);
+        toast({
+          title: "OTP Verified",
+          description: "Your identity has been verified successfully.",
+        });
+        setActiveStep(4); // Move to review
+      } else {
+        toast({
+          title: "Invalid OTP",
+          description: "Please enter the correct verification code.",
+          variant: "destructive",
+        });
+      }
+    }, 1500);
   };
   
   const handlePlaceOrder = () => {
@@ -64,7 +108,7 @@ const CheckoutPage = () => {
           <div className="mb-8">
             <div className="flex justify-between mb-6">
               <button
-                className={`flex flex-col items-center w-1/3 ${
+                className={`flex flex-col items-center ${
                   activeStep >= 1 ? "text-brand" : "text-muted-foreground"
                 }`}
                 onClick={() => activeStep > 1 && setActiveStep(1)}
@@ -75,13 +119,13 @@ const CheckoutPage = () => {
                 }`}>
                   1
                 </div>
-                <span className="text-sm hidden sm:block">Shipping</span>
+                <span className="text-xs sm:text-sm">Shipping</span>
               </button>
               
-              <div className="w-full mx-4 mt-4 border-t hidden sm:block"></div>
+              <div className="w-full mx-2 mt-4 border-t hidden sm:block"></div>
               
               <button
-                className={`flex flex-col items-center w-1/3 ${
+                className={`flex flex-col items-center ${
                   activeStep >= 2 ? "text-brand" : "text-muted-foreground"
                 }`}
                 onClick={() => activeStep > 2 && setActiveStep(2)}
@@ -92,23 +136,39 @@ const CheckoutPage = () => {
                 }`}>
                   2
                 </div>
-                <span className="text-sm hidden sm:block">Payment</span>
+                <span className="text-xs sm:text-sm">Payment</span>
               </button>
               
-              <div className="w-full mx-4 mt-4 border-t hidden sm:block"></div>
+              <div className="w-full mx-2 mt-4 border-t hidden sm:block"></div>
               
               <button
-                className={`flex flex-col items-center w-1/3 ${
+                className={`flex flex-col items-center ${
                   activeStep >= 3 ? "text-brand" : "text-muted-foreground"
                 }`}
-                disabled
+                disabled={activeStep < 3}
               >
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-2 ${
                   activeStep >= 3 ? "bg-brand text-white" : "bg-muted"
                 }`}>
                   3
                 </div>
-                <span className="text-sm hidden sm:block">Review</span>
+                <span className="text-xs sm:text-sm">Verify</span>
+              </button>
+              
+              <div className="w-full mx-2 mt-4 border-t hidden sm:block"></div>
+              
+              <button
+                className={`flex flex-col items-center ${
+                  activeStep >= 4 ? "text-brand" : "text-muted-foreground"
+                }`}
+                disabled={activeStep < 4}
+              >
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-2 ${
+                  activeStep >= 4 ? "bg-brand text-white" : "bg-muted"
+                }`}>
+                  4
+                </div>
+                <span className="text-xs sm:text-sm">Review</span>
               </button>
             </div>
           </div>
@@ -210,6 +270,13 @@ const CheckoutPage = () => {
                       PayPal
                     </Label>
                   </div>
+                  
+                  <div className="flex items-center space-x-2 border p-4 rounded-md">
+                    <RadioGroupItem value="cod" id="cod" />
+                    <Label htmlFor="cod" className="cursor-pointer">
+                      Cash On Delivery (COD)
+                    </Label>
+                  </div>
                 </RadioGroup>
                 
                 {paymentMethod === "credit-card" && (
@@ -254,14 +321,81 @@ const CheckoutPage = () => {
                     Back
                   </Button>
                   <Button onClick={handleContinue}>
+                    Continue to Verification
+                  </Button>
+                </div>
+              </div>
+            )}
+            
+            {/* Step 3: OTP Verification */}
+            {activeStep === 3 && (
+              <div>
+                <h2 className="text-xl font-bold mb-6">Verify Your Identity</h2>
+                
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <p className="mb-6">
+                      We've sent a 4-digit verification code to your mobile phone. 
+                      Please enter the code below to verify your identity.
+                    </p>
+                    
+                    <div className="flex justify-center mb-6">
+                      <InputOTP 
+                        maxLength={4} 
+                        value={otp} 
+                        onChange={(value) => setOtp(value)}
+                        render={({ slots }) => (
+                          <InputOTPGroup>
+                            {slots.map((slot, index) => (
+                              <InputOTPSlot key={index} index={index} className="w-12 h-12 text-2xl" />
+                            ))}
+                          </InputOTPGroup>
+                        )}
+                      />
+                    </div>
+                    
+                    {otpVerified ? (
+                      <div className="flex items-center justify-center text-green-600 mb-4">
+                        <CheckCircle className="mr-2 h-5 w-5" />
+                        <span>Verification Successful</span>
+                      </div>
+                    ) : (
+                      <Button 
+                        onClick={verifyOtp} 
+                        disabled={otp.length < 4 || isVerifyingOtp}
+                        className="mb-4"
+                      >
+                        {isVerifyingOtp ? "Verifying..." : "Verify OTP"}
+                      </Button>
+                    )}
+                    
+                    <div className="text-sm text-muted-foreground">
+                      <button 
+                        className="text-brand hover:underline"
+                        onClick={sendOtp}
+                      >
+                        Resend OTP
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-8 flex justify-between">
+                  <Button variant="outline" onClick={handleBack}>
+                    Back
+                  </Button>
+                  <Button 
+                    onClick={handleContinue} 
+                    disabled={!otpVerified}
+                  >
                     Continue to Review
                   </Button>
                 </div>
               </div>
             )}
             
-            {/* Step 3: Review */}
-            {activeStep === 3 && (
+            {/* Step 4: Review */}
+            {activeStep === 4 && (
               <div>
                 <h2 className="text-xl font-bold mb-6">Review Your Order</h2>
                 
@@ -282,10 +416,14 @@ const CheckoutPage = () => {
                   <div>
                     <h3 className="font-medium mb-2">Payment Method</h3>
                     <div className="text-sm space-y-1 text-muted-foreground">
-                      <p className="flex items-center">
-                        <CreditCard className="mr-2 h-4 w-4" />
-                        Credit Card ending in •••• 1234
-                      </p>
+                      {paymentMethod === "cod" ? (
+                        <p>Cash On Delivery</p>
+                      ) : (
+                        <p className="flex items-center">
+                          <CreditCard className="mr-2 h-4 w-4" />
+                          Credit Card ending in •••• 1234
+                        </p>
+                      )}
                     </div>
                   </div>
                   
